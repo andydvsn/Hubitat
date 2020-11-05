@@ -1,7 +1,7 @@
 /**
- *  Copyright 2020 Markus Liljergren
+ *  Copyright 2020 Markus Liljergren (https://oh-lalabs.com)
  *
- *  Version: v0.1.0.0718b
+ *  Version: v0.1.0.1025b
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@
 import java.util.Date
 
 metadata {
-    definition(name: "JavaScript Injector", namespace: "markus-li", author: "Markus Liljergren") {
+    definition (name: "JavaScript Injector", namespace: "oh-lalabs.com", author: "Markus Liljergren", filename: "javascript-injection-driver", importUrl: "https://raw.githubusercontent.com/markus-li/Hubitat/release/drivers/expanded/javascript-injection-driver-expanded.groovy") {
         capability "TemperatureMeasurement"
         capability "Refresh"
 
@@ -81,47 +81,49 @@ left: 400px;
   
   String jsInjectionWithReInsert = '''
 <img src="n" onerror='
-function lJ(callback) {
-    var urlParams = new URLSearchParams(window.location.search);
-    var xobj = new XMLHttpRequest();
-        xobj.overrideMimeType("application/json");
-    xobj.open("GET", window.location.pathname + "/layout", true);
-    xobj.withCredentials = true;
-    xobj.setRequestHeader("Authorization","Bearer " + urlParams.get("access_token"));
-    xobj.onreadystatechange = function () {
-          if (xobj.readyState == 4 && xobj.status == "200") {
-            callback(xobj.responseText);
-          }
-    };
-    xobj.send(null);  
+var h = function (c, r, number) {
+  console.log(1+r+number);
+    var u = new URLSearchParams(window.location.search);
+    var x = new XMLHttpRequest();
+    x.overrideMimeType("application/json");
+    x.open("GET", r, true);
+    x.withCredentials = true;
+    x.setRequestHeader("Authorization","Bearer " + u.get("access_token"));
+    x.onreadystatechange = function () {
+          if (x.readyState == 4 && x.status == "200" && "customJS" in JSON.parse(x.responseText)) {
+            console.log(3+x.responseText);
+            c(x.responseText);
+          } else if (x.readyState == 4 && number !== 1) {
+            h(c, "/local/3e258ced-82e0-5387-90c2-aa78743abff5-usermode.json", 1)
+          }};
+    x.send(null);  
  }
-lJ(function(response) {
-  console.log(1);
+h(function(response) {
       var data = JSON.parse(response);
+      console.log(data);
       var body = document.getElementsByTagName("body")[0];
-      var div = document.getElementById("inserted-bootstrap-html");
+      var div = document.getElementById("ibh");
       var hasDiv = div != null;
       if(!hasDiv) {
           div = document.createElement("div");
-          div.setAttribute("id", "inserted-bootstrap-html");
+          div.setAttribute("id", "ibh");
       }
       div.innerHTML = data.customHTML;
       if(!hasDiv) {
           body.prepend(div);
       }
 
-      var script = document.getElementById("inserted-bootstrap-script");
+      var script = document.getElementById("ibs");
       var hasScript = script != null;
       if(script != null) {
           script.remove();
       }
       script = document.createElement("script");
-      script.setAttribute("id", "inserted-bootstrap-script")
+      script.setAttribute("id", "ibs")
       script.type = "text/javascript";
       script.innerHTML = data.customJS;
       body.prepend(script);
-console.log("1E");
-    });
+    }, window.location.pathname + "/layout", 0);
 ' />'''
 
   String jsInjectionWithoutReInsert = '''
